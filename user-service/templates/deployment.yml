@@ -22,3 +22,7 @@ spec:
         image: magley/bookem-user-service:0.1.0
         ports:
         - containerPort: 8080
+
+        envFrom:
+        - configMapRef:
+            name: user-service
