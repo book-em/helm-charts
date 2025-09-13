@@ -288,5 +288,180 @@ spec:
             name: user-service
 ```
 
+**1.6 Update the chart**
+
+We _install_ helm charts only once. If the chart by that name already exists,
+we must _upgrade_ it:
+
+```sh
+helm upgrade user-service ./user-service
 ```
+
+Since this is annoying (install or upgrade), we can use the `--install/-i` flag
+to upgrade if chart exists or install if it doesn't:
+
+```sh
+helm upgrade -i user-service ./user-service
+```
+
+That's the command I'll be using from now on.
+
+```sh
+kubectl get all
+
+NAME                                READY   STATUS             RESTARTS       AGE
+pod/user-service-5697759744-qvxmp   0/1     CrashLoopBackOff   11 (25s ago)   27m
+pod/user-service-84b5b8c74d-cdsg7   0/1     Error              3 (42s ago)    62s
+
+
+
+kubectl logs pod/user-service-84b5b8c74d-cdsg7
+
+2025/09/13 13:15:27 /app/main.go:47
+[error] failed to initialize database, got error failed to connect to `user=bookem_userdb_user database=bookem_userdb_db`: hostname resolving error: lookup user-db on 10.96.0.10:53: server misbehaving
+2025/09/13 13:15:27 Failed to open DB: failed to connect to `user=bookem_userdb_user database=bookem_userdb_db`: hostname resolving error: lookup user-db on 10.96.0.10:53: server misbehaving
+```
+
+Now the problem is that it can't connect to `user-db` because we don't have it ready yet. We need to create a helm chart for `user-db` as well.
+
+**2. Create charts for user-db.**
+
+The process is exactly the same:
+
+```sh
+helm create user-db
+# And then delete the templates and contents of values.yaml...
+```
+
+```yml
+# deployment.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-db
+  namespace: default
+  labels:
+    app: user-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-db
+  template:
+    metadata:
+      labels:
+        app: user-db
+    spec:
+      containers:
+      - name: user-db
+        image: postgres:15.9-alpine3.20
+        ports:
+        - containerPort: 5432
+
+        envFrom:
+        - configMapRef:
+            name: user-db
+
+        # This is new. We create a volume mount called `db-storage`
+        # and have it mount /var/lib/postgresql/data.
+        # Compare it to the volume mount in user-db in compose.yml.
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: db-storage
+
+      # This is like the volumes resource in compose.yml at the very
+      # bottom of the file. Notice how this is written inside `spec`
+      # but outside `containers`. Similar to docker compose.
+      # Make sure the claimName matches the name of the Persistent
+      # Volume Claim (see below).
+      volumes:
+      - name: db-storage
+        persistentVolumeClaim:
+          claimName: user-db
+```
+
+```yml
+# service.yml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-db
+  namespace: default
+  labels:
+    app: user-db
+spec:
+  selector:
+    app: user-db
+  ports:
+    - protocol: TCP
+      targetPort: 5432
+      port: 5432
+```
+
+```yml
+# configmap.yml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-db
+  namespace: default
+data:
+  POSTGRES_DB: bookem_userdb_db
+  POSTGRES_USER: bookem_userdb_user
+  POSTGRES_PASSWORD: password123
+```
+
+The new thing here is a PersistentVolumeClaim:
+
+```yml
+# pvc.yml
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: user-db
+  namespace: default
+spec:
+  # Can be read by a single node (minikube = 1 node).
+  accessModes:
+    - ReadWriteOnce
+
+  resources:
+    requests:
+      storage: 1Gi
+
+  # Because this is set to `standard`, we don't have to create
+  # a Persistent Volume itself. The kubernetes engine will take
+  # care of that for us.
+  storageClassName: standard
+```
+
+```sh
+helm upgrade -i user-db ./user-db
+```
+
+```sh
+kubectl get pods
+
+
+NAME                            READY   STATUS             RESTARTS         AGE
+user-db-695c48fbf5-zmmfm        1/1     Running            0                5s
+
+
+kubectl logs user-db-695c48fbf5-zmmfm
+
+PostgreSQL Database directory appears to contain a database; Skipping initialization
+
+2025-09-13 13:40:52.499 UTC [1] LOG:  starting PostgreSQL 15.9 on x86_64-pc-linux-musl, compiled by gcc (Alpine 13.2.1_git20240309) 13.2.1 20240309, 64-bit
+2025-09-13 13:40:52.499 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2025-09-13 13:40:52.499 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2025-09-13 13:40:52.509 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-09-13 13:40:52.527 UTC [29] LOG:  database system was shut down at 2025-09-13 12:48:25 UTC
+2025-09-13 13:40:52.559 UTC [1] LOG:  database system is ready to accept connections
+```
+
+It works. Now to connect user-service to user-db.
 
