@@ -59,6 +59,8 @@ away with just the claim under the right configurations.
 
 - `Ingress` ...
 
+- `Secret` is a secret. We can use this to pass secret files like JWT keys to Deployments (Pods).
+
 When we write a helm chart, we will _at least_ write a deployment and a service. Pods
 are "embedded" inside deployments.
 
@@ -537,3 +539,108 @@ Error #01: invalid user or password
 ```
 
 So we will need to mount the keys.
+
+**5. Add JWT keys to user-service Pod**
+
+For this, we will use a Secret resource:
+
+```yml
+# secret.yml
+
+apiVersion: v1
+kind: Secret
+metadata:
+  # We'll use a different name just in case we have multiple secrets.
+  name: user-service-jwt-keys
+  namespace: default
+type: Opaque
+data:
+  # The data is in the format KEY: VALUE
+  # In this case, we create two KEYs, matching the names of the files.
+  # This is important because of the way these secrets are used (see below).
+  #
+  # As for the file, this is the first time we're using a Helm declaration.
+  # It's anything between {{ }}
+  # The inside is either some value or function calls.
+  # In this case, we have .Files which is like a built in module, and we
+  # use the method Get, followed by its parameter.
+  #
+  # So .Files.Get "secrets/keys/private_key.key" will basically load the
+  # file "secrets/keys/private_key.key" (file paths are relative to the chart
+  # directory) and PASTE its contents in-place.
+  #
+  # Then, we pipe that result (i.e. file contents) into the function b64enc
+  # which encodes the file.
+  #
+  # So once the template supstitution is done, private_key.key will equal
+  # the base64 encoded value of the private key. Note that this is all in
+  # memory, no files have been created for this purpose.
+
+  private_key.key: {{ .Files.Get "secrets/keys/private_key.key" | b64enc }}
+  public_key.pem: {{ .Files.Get "secrets/keys/public_key.pem" | b64enc }}
+```
+
+Now we need to mount this:
+
+```yml
+# deployment.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata: ...
+spec:
+  ...
+  template:
+    ...
+    spec:
+      containers:
+      - name: user-service
+        ...
+
+        # We mount `jwt-keys` to /app/keys
+        volumeMounts:
+        - name: jwt-keys
+          mountPath: /app/keys
+          readOnly: true
+
+      # `jwt-keys` is from a Secret called `user-service-jwt-keys`
+      # This will basically create all the files from the Secret's
+      # key-value pairs at runtime.
+      volumes:
+      - name: jwt-keys
+        secret:
+          secretName: user-service-jwt-keys
+```
+
+Finally, we must actually pass the keys.
+I'll copy the `keys/` folder from the `user-service` git repo and put it in a `secrets/` folder (that's why `{{ .Files.Get "secrets/keys/private_key.key" | b64enc }}` uses that exact path).
+
+You can check if it really works by running:
+
+```
+helm template ./user-service
+```
+
+This will print the final k8s manifest for this chart to stdout.
+Find the keys and check if they're really hardcoded:
+
+```yml
+---
+# Source: user-service/templates/secret.yml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: user-service-jwt-keys
+  namespace: default
+type: Opaque
+data:
+  private_key.key: LS0tLS...LS0NCg==
+  public_key.pem: LS0tLS...LS0NCg==
+---
+# Source: user-service/templates/configmap.yml
+apiVersion: v1
+kind: ConfigMap
+...
+```
+
+Finally we can upgrade the user-service and now registering new users inside the web app should work.
