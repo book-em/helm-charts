@@ -535,3 +535,5 @@ Error #01: invalid user or password
 2025/09/13 13:52:08 could not open private key /app/keys/private_key.key: open /app/keys/private_key.key: no such file or directory
 2025/09/13 13:52:08 [DEBUG] Error: invalid user or password
 ```
+
+So we will need to mount the keys.
