@@ -68,10 +68,15 @@ Here's the process of creating helm charts.
 
 1. We will create `user-service` first.
 
-    1.1. Create a default helm chart:
+**1.1. Create a default helm chart:**
 
-    ```sh
-    helm create user-service
-    ```
+```sh
+helm create user-service
+```
 
-    1.2.
+There's a lot of files in the newly created `user-service/` folder.</br>
+We can delete everything in `/templates/` and also clear `values.yaml`.
+
+**1.2. Remove default templates and values (do this manually)**
+
+**1.3. Create a basic deployment and service for user-service**
