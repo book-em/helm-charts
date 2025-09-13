@@ -157,7 +157,6 @@ spec:
   ports:
     - protocol: TCP     # TCP is the default, but no harm in being explicit.
       targetPort: 8080  # Port of the pods.
-      port: 8080        # In infrastructure/compose.yml we used 9500.
       port: 8080        # In infrastructure/compose.yml we used 8500.
 ```
 
@@ -465,3 +464,74 @@ PostgreSQL Database directory appears to contain a database; Skipping initializa
 
 It works. Now to connect user-service to user-db.
 
+**3 Fix user-serivce**
+
+Sometimes you will need to force reset the chart (pod/deployment/service/...) because
+doing `helm upgrade` won't fix it (especially if the helm chart hasn't updated).
+
+```sh
+kubectl rollout restart deployment user-service
+```
+
+```ts
+kubectl get all
+
+NAME                               READY   STATUS    RESTARTS   AGE
+pod/user-db-695c48fbf5-zmmfm       1/1     Running   0          2m57s
+pod/user-service-bb667b748-kgbck   1/1     Running   0          4s
+```
+
+```ts
+kubectl logs service/user-service
+
+2025/09/13 13:43:44 Connected to DB!
+[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:   export GIN_MODE=release
+ - using code:  gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] GET    /healthz                  --> main.main.func1 (4 handlers)
+[GIN-debug] POST   /api/register             --> bookem-user-service/api.(*Handler).registerUser-fm (5 handlers)
+[GIN-debug] POST   /api/login                --> bookem-user-service/api.(*Handler).login-fm (5 handlers)
+[GIN-debug] PUT    /api/update               --> bookem-user-service/api.(*Handler).update-fm (5 handlers)
+[GIN-debug] PUT    /api/password             --> bookem-user-service/api.(*Handler).changePassword-fm (5 handlers)
+[GIN-debug] GET    /api/:id                  --> bookem-user-service/api.(*Handler).findById-fm (5 handlers)
+[GIN-debug] DELETE /api/:id                  --> bookem-user-service/api.(*Handler).deleteById-fm (5 handlers)
+[GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
+Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.
+[GIN-debug] Environment variable PORT is undefined. Using port :8080 by default
+[GIN-debug] Listening and serving HTTP on :8080
+```
+
+It works now.
+
+**4. Test user service inside of the pod**
+
+```sh
+curl -X GET http://localhost:8080/healthz
+```
+
+This will **fail**. It's because by default services are not available to the outside.
+
+For this we would normally use something like Ingress or a NodePort service.
+But for now, let's just forward ports:
+
+```sh
+kubectl port-forward service/user-service 8500:8080
+```
+
+This will basically open the port until you Ctrl+D.
+
+So open the web browser and go to `http://localhost:8500/healthz` it should return `null`.
+
+In fact, let's try using it through the web app. Run the web-app (npm run dev) and create a new user in the Register page.
+
+This will **fail**, because if the user-service doesn't have access to the keys. If you check the logs of the user-service pod, you'll see this:
+
+```ts
+[GIN] 2025/09/13 - 13:52:08 | 400 |   83.263947ms |       127.0.0.1 | POST     "/api/login"
+Error #01: invalid user or password
+2025/09/13 13:52:08 could not open private key /app/keys/private_key.key: open /app/keys/private_key.key: no such file or directory
+2025/09/13 13:52:08 [DEBUG] Error: invalid user or password
+```
