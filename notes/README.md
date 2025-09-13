@@ -66,6 +66,10 @@ are "embedded" inside deployments.
 
 Here's the process of creating helm charts.
 
+First of all, you need to start minikube `minikube start` and also it would be
+a good idea to do `docker compose down` for the `infrastructure` repo so we don't
+accidentally send requests to the docker containers instead of k8s pods later on.
+
 1. We will create `user-service` first.
 
 **1.1. Create a default helm chart:**
@@ -154,5 +158,135 @@ spec:
     - protocol: TCP     # TCP is the default, but no harm in being explicit.
       targetPort: 8080  # Port of the pods.
       port: 8080        # In infrastructure/compose.yml we used 9500.
+      port: 8080        # In infrastructure/compose.yml we used 8500.
+```
+
+**1.4 Install the chart**
+
+Installing a chart means to create it and run it.
+
+```sh
+helm install user-service ./user-service
+```
+
+It should output this:
+
+```ts
+NAME: user-service
+LAST DEPLOYED: Sat Sep 13 14:48:31 2025
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+```
+
+Now we can check by using kubectl:
+
+```sh
+kubectl get all
+```
+
+It should output this:
+
+```ts
+NAME                                READY   STATUS             RESTARTS      AGE
+pod/user-service-5697759744-qvxmp   0/1     CrashLoopBackOff   3 (38s ago)   82s
+
+NAME                   TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+service/kubernetes     ClusterIP   10.96.0.1       <none>        443/TCP    2d23h
+service/user-service   ClusterIP   10.107.109.64   <none>        8080/TCP   83s
+
+NAME                           READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/user-service   0/1     1            0           83s
+
+NAME                                      DESIRED   CURRENT   READY   AGE
+replicaset.apps/user-service-5697759744   1         1         0       83s
+```
+
+We have a single Pod, two Services (the `kubernetes` Service is handled by
+minikube), one Deployment and one Replicaset (Replicasets are handleded by
+Deployments, but it's the actual "collection" of Pods).
+
+Take a look at the pod details:
+
+```ts
+NAME  READY   STATUS             RESTARTS      AGE
+...   0/1     CrashLoopBackOff   3 (38s ago)   82s
+```
+
+The status is `CrashLoopBackOff`. That means it's starting, crashing, restarting,
+crashing, ...
+
+Let's see what's going on. This will print the logs.
+
+```sh
+kubectl logs pod/user-service-5697759744-qvxmp
+```
+
+If we add a `-f` flag, it will "attach" the terminal to the log output so you can
+recieve logs in real time.
+
+Anyway, here's the log output:
+
+```ts
+2025/09/13 12:51:40 Failed to open DB: failed to connect to `user=password= database=sslmode=disable`:
+        hostname resolving error: lookup port=: no such host
+        lookup port=: no such host
+
+2025/09/13 12:51:40 /app/main.go:47
+[error] failed to initialize database, got error failed to connect to `user=password= database=sslmode=disable`:
+        hostname resolving error: lookup port=: no such host
+        lookup port=: no such host
+```
+
+So the problem is that the connection string is incorrect. `user`, `password` and `database` are empty. That's because we didn't set the environment variables.
+
+**1.5 Add a configmap**
+
+We can put the env variables directly inside a Deployment, but Deployments can get
+verbose very quickly, so it's better to extract them into a Configmap.
+
+Configmap:
+```yml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-service
+  namespace: default
+
+# Notice that numbers are written as quotes. This is important.
+# Also, this is all copied from `infrastructure/compose.yml`.
+data:
+  DB_HOST: user-db
+  DB_PORT: "5432"
+  DB_NAME: bookem_userdb_db
+  DB_USER: bookem_userdb_user
+  DB_PASSWORD: password123
+  JWT_PRIVATE_KEY_PATH: /app/keys/private_key.key
+  JWT_PUBLIC_KEY_PATH: /app/keys/public_key.pem
+```
+
+Now we "include" the configmap inside the deployment:
+
+```yml
+apiVersion: apps/v1
+kind: Deployment
+metadata: ...
+spec:
+  ...
+  template:
+    metadata: ...
+    spec:
+      containers:
+      - name: ...
+
+        # We add an environment from a ConfigMap reference.
+        # This is added inside a container.
+        # Name must match the name of the ConfigMap.
+        envFrom:
+        - configMapRef:
+            name: user-service
+```
+
 ```
 
