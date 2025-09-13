@@ -26,3 +26,13 @@ spec:
         envFrom:
         - configMapRef:
             name: user-service
+
+        volumeMounts:
+        - name: jwt-keys
+          mountPath: /app/keys
+          readOnly: true
+
+      volumes:
+      - name: jwt-keys
+        secret:
+          secretName: user-service-jwt-keys
