@@ -80,3 +80,79 @@ We can delete everything in `/templates/` and also clear `values.yaml`.
 **1.2. Remove default templates and values (do this manually)**
 
 **1.3. Create a basic deployment and service for user-service**
+
+Deployment:
+```yml
+apiVersion: apps/v1
+
+kind: Deployment
+
+# Metadata should at least have name and namespace.
+# We'll use the default namespace for now.
+# labels is a special thing in k8s which we can use to "group"
+# things. You'll see below a `selector` which refers to labels.
+# Labels are arbitrary, but `app` is commonly used by everyone.
+metadata:
+  name: user-service
+  namespace: default
+  labels:
+    app: user-service
+
+# This is the actual specification of the deployment.
+spec:
+  replicas: 1
+
+  # This is saying: "create 1 of anything that has a label called app
+  # with the value user-service". In this case, it will check for that
+  # "anything" inside of `template`. 
+  selector:
+    matchLabels:
+      app: user-service
+
+  template:
+    # This is a single "thing" (Pod) which we create. Because it has
+    # a label called app with the value user-serivce, the Deployment's
+    # selector (see above) will match, and create `replicas`-many Pods
+    # described by this template.
+    metadata:
+      labels:
+        app: user-service
+
+    # This also has a specification, since it's a Pod.
+    spec:
+      containers:
+      - name: user-service
+        image: magley/bookem-user-service:0.1.0
+        ports:
+        - containerPort: 8080
+```
+
+Service:
+```yml
+apiVersion: v1
+kind: Service
+
+# This has the same metadata as the Deployment. It doesn't have to, but
+# if the namespaces don't match, you'll have problems. As for the name,
+# we do this on purpose so it's easier for us. Same goes for the label.
+metadata:
+  name: user-service
+  namespace: default
+  labels:
+    app: user-service
+
+spec:
+  # This is selecting against Pods (because Services combine Pods under a single
+  # service), so the Pods (defined in deployment) must have this exact label.
+  # The reason you don't write matchLabels like in the Deployment is because
+  # only Deployments support multiple ways of matching labels (one of which is
+  # matchLabels). Services _only_ support that.
+  selector:
+    app: user-service
+
+  ports:
+    - protocol: TCP     # TCP is the default, but no harm in being explicit.
+      targetPort: 8080  # Port of the pods.
+      port: 8080        # In infrastructure/compose.yml we used 9500.
+```
+
