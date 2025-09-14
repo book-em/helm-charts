@@ -798,3 +798,16 @@ We can see the list of images like so:
 kubectl exec [pod name] -- ls -a /usr/share/nginx/html/images
 ```
 
+**8.3** room-service is simple enough. Just be careful when copy-pasting stuff.
+
+**8.4** Testing:
+
+We can test if everything works by opening ports to all the servers:
+
+```sh
+kubectl port-forward svc/user-service 8500:8080
+kubectl port-forward svc/room-service 8503:8080
+kubectl port-forward svc/room-image-server 8505:80
+```
+
+Note that this requires 3 terminals since port-forward steals the shell.

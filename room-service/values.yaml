@@ -1,0 +1,22 @@
+appName: room-service
+namespace: default
+replicas: 1
+image:
+  name: magley/bookem-room-service
+  tag: "0.3.0"
+port: "8080"
+
+configmap:
+  data:
+    DB_HOST: room-db
+    DB_PORT: "5432"
+    DB_NAME: bookem_roomdb_db
+    DB_USER: bookem_roomdb_user
+    DB_PASSWORD: password123
+    JWT_PUBLIC_KEY_PATH: /app/keys/public_key.pem
+
+volumes:
+  nginxImageStorage:
+    pvcName: room-image-pvc
+    path: /app/images/
+    space: 1Gi
