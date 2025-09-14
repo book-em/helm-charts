@@ -773,3 +773,7 @@ spec:
         timeoutSeconds: 5
         failureThreshold: 5
 ```
+
+**8. Deploying Room service, DB and Nginx server**
+
+**8.1** room-db is similar to user-db
