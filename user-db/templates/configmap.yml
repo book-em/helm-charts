@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: user-db
-  namespace: default
+  name: {{ .Values.appName }}
+  namespace: {{ .Values.namespace }}
 data:
-  POSTGRES_DB: bookem_userdb_db
-  POSTGRES_USER: bookem_userdb_user
-  POSTGRES_PASSWORD: password123
+  POSTGRES_DB: {{ .Values.configmap.data.POSTGRES_DB | quote }}
+  POSTGRES_USER: {{ .Values.configmap.data.POSTGRES_USER | quote }}
+  POSTGRES_PASSWORD: {{ .Values.configmap.data.POSTGRES_PASSWORD | quote }}

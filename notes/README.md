@@ -644,3 +644,70 @@ kind: ConfigMap
 ```
 
 Finally we can upgrade the user-service and now registering new users inside the web app should work.
+
+**6. Templating the helm charts**
+
+Example:
+
+```yml
+# deployment.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  ...
+spec:
+  replicas: 1
+
+  ...
+```
+
+If we want to make the number of replicas "variable", we would do:
+
+```yml
+# deployment.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  ...
+spec:
+  replicas: {{ .Values.replicas }}
+```
+
+and then in `values.yaml`:
+
+```yml
+# values.yaml
+
+replicas: 1
+```
+
+If we want to change it later, we modify `replicas` in `values.yaml` and then upgrade the helm chart. So the `.Values` variable is the main thing here.
+
+Values can be nested:
+
+```yml
+---
+# values.yaml
+
+replicas: 1
+
+image:
+  name: magley/bookem-user-service
+  tag: 0.1.0
+
+---
+# deployment.yml
+
+spec:
+  replicas: {{ .Values.replicas }}
+  template:
+    spec:
+      containers:
+      - image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
+        # I add quotes just in case.
+```
+
+You can do fancy things like iterating over an array of elements, too, but we probably
+won't need that just yet.

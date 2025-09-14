@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: user-service
-  namespace: default
+  name: {{ .Values.appName }}
+  namespace: {{ .Values.namespace }}
   labels:
-    app: user-service
+    app: {{ .Values.appName }}
 spec:
   selector:
-    app: user-service
+    app: {{ .Values.appName }}
 
   ports:
     - protocol: TCP
-      targetPort: 8080
-      port: 8080
+      targetPort: {{ .Values.port }}
+      port: {{ .Values.port }}

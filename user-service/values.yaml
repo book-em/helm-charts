@@ -1,0 +1,17 @@
+appName: user-service
+namespace: default
+replicas: 1
+image:
+  name: magley/bookem-user-service
+  tag: "0.1.0"
+port: "8080"
+
+configmap:
+  data:
+    DB_HOST: user-db
+    DB_PORT: "5432"
+    DB_NAME: bookem_userdb_db
+    DB_USER: bookem_userdb_user
+    DB_PASSWORD: password123
+    JWT_PRIVATE_KEY_PATH: /app/keys/private_key.key
+    JWT_PUBLIC_KEY_PATH: /app/keys/public_key.pem

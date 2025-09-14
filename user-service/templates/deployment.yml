@@ -1,31 +1,31 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user-service
-  namespace: default
+  name: {{ .Values.appName }}
+  namespace: {{ .Values.namespace }}
   labels:
-    app: user-service
+    app: {{ .Values.appName }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicas }}
 
   selector:
     matchLabels:
-      app: user-service
+      app: {{ .Values.appName }}
 
   template:
     metadata:
       labels:
-        app: user-service
+        app: {{ .Values.appName }}
     spec:
       containers:
-      - name: user-service
-        image: magley/bookem-user-service:0.1.0
+      - name: {{ .Values.appName }}
+        image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
         ports:
-        - containerPort: 8080
+        - containerPort: {{ .Values.port }}
 
         envFrom:
         - configMapRef:
-            name: user-service
+            name: {{ .Values.appName }}
 
         volumeMounts:
         - name: jwt-keys
@@ -35,4 +35,4 @@ spec:
       volumes:
       - name: jwt-keys
         secret:
-          secretName: user-service-jwt-keys
+          secretName: "{{ .Values.appName }}-jwt-keys"
