@@ -1,0 +1,13 @@
+appName: room-image-server
+namespace: default
+replicas: 1
+image:
+  name: magley/bookem-room-images-server
+  tag: "nightly-0.0.1"
+port: "80"
+
+volumes:
+  nginxImageStorage:
+    pvcName: room-image-pvc
+    path: /usr/share/nginx/html/images
+    space: 1Gi

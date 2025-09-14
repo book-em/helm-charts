@@ -777,3 +777,24 @@ spec:
 **8. Deploying Room service, DB and Nginx server**
 
 **8.1** room-db is similar to user-db
+
+**8.2** room-image-server is the "room-images" Nginx server.
+
+We use a PVC to mount images.
+Remember: this is local to the room-images pod.
+
+But room service which is in a different chart, and therefore in a different
+pod, will need to write to this directory, so the PVC `accessModes` must be
+`ReadWriteMany` instead of `ReadWriteOnce`.
+
+Furthermore, since the two charts use the same PVC, we must:
+- give it a unique name like {{ .Values.sharedImagesPvc }}
+- define it only once (since we use the same namespace)
+- reference it in deployments of both the room-service and room-image-server 
+
+We can see the list of images like so:
+
+```sh
+kubectl exec [pod name] -- ls -a /usr/share/nginx/html/images
+```
+
