@@ -711,3 +711,65 @@ spec:
 
 You can do fancy things like iterating over an array of elements, too, but we probably
 won't need that just yet.
+
+**7. Health check**
+
+In Docker Compose we have healthcheck. In K8s, we have probes.
+The two important probes are:
+- livenessProbe = is the container inside the Pod alive (running)?
+- readinessProbe = is the container inside the Pod ready (ready to accept connections)?
+
+It's best to write both, with livenessProbe having a greater period.
+
+```yml
+# user-service/deplyment.yml
+
+spec:
+  containers:
+    - ...
+      readinessProbe:
+        httpGet:
+          path: /healthz
+          port: {{ .Values.port }}
+        initialDelaySeconds: 3
+        periodSeconds: 10
+        timeoutSeconds: 3
+        failureThreshold: 5
+
+      livenessProbe:
+        httpGet:
+          path: /healthz
+          port: {{ .Values.port }}
+        initialDelaySeconds: 10
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 5
+
+---
+# user-db/deplyment.yml
+
+spec:
+  containers:
+    - ...
+      readinessProbe:
+        exec:
+          command:
+            - /bin/sh
+            - -c
+            - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
+        initialDelaySeconds: 3
+        periodSeconds: 10
+        timeoutSeconds: 3
+        failureThreshold: 5
+
+      livenessProbe:
+        exec:
+          command:
+            - /bin/sh
+            - -c
+            - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
+        initialDelaySeconds: 10
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 5
+```
