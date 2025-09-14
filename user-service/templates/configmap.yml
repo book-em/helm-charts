@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: user-service
-  namespace: default
+  name: {{ .Values.appName }}
+  namespace: {{ .Values.namespace }}
 data:
-  DB_HOST: user-db
-  DB_PORT: "5432"
-  DB_NAME: bookem_userdb_db
-  DB_USER: bookem_userdb_user
-  DB_PASSWORD: password123
-  JWT_PRIVATE_KEY_PATH: /app/keys/private_key.key
-  JWT_PUBLIC_KEY_PATH: /app/keys/public_key.pem
+  DB_HOST: {{ .Values.configmap.data.DB_HOST | quote }}
+  DB_PORT: {{ .Values.configmap.data.DB_PORT | quote }}
+  DB_NAME: {{ .Values.configmap.data.DB_NAME | quote }}
+  DB_USER: {{ .Values.configmap.data.DB_USER | quote }}
+  DB_PASSWORD: {{ .Values.configmap.data.DB_PASSWORD | quote }}
+  JWT_PRIVATE_KEY_PATH: {{ .Values.configmap.data.JWT_PRIVATE_KEY_PATH | quote }}
+  JWT_PUBLIC_KEY_PATH: {{ .Values.configmap.data.JWT_PUBLIC_KEY_PATH | quote }}
