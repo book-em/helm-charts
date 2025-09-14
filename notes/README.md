@@ -811,3 +811,17 @@ kubectl port-forward svc/room-image-server 8505:80
 ```
 
 Note that this requires 3 terminals since port-forward steals the shell.
+
+**9. Deploying reservation db and reservation service**
+
+This is pretty much the same as user service, but we don't need the private key
+(like we didn't need it in the room service).
+
+We can then test everything by opening ports of these services:
+
+```sh
+kubectl port-forward svc/user-service 8500:8080
+kubectl port-forward svc/room-service 8503:8080
+kubectl port-forward svc/room-image-server 8505:80
+kubectl port-forward svc/reservation-service 8506:8080
+```
