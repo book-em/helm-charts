@@ -1,0 +1,17 @@
+appName: web-app
+namespace: default
+replicas: 1
+image:
+  name: magley/bookem-web-app
+  tag: "nightly-0.3.12"
+port: "80"
+publicPort: 30000
+
+configmap:
+  js_env_path: /usr/share/nginx/html/env.js
+  js_env_file: env.js
+  data:
+    USER_SERVICE_URL: http://bookem.local/user
+    ROOM_SERVICE_URL: http://bookem.local/room
+    ROOM_SERVICE_IMAGES_URL: http://bookem.local/images
+    RESERVATION_SERVICE_URL: http://bookem.local/reservation
