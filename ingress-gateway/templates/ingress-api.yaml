@@ -7,10 +7,10 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
   rules:
-  - host: {{ .Values.host }}
+  - host: {{ .Values.api.host }}
     http:
       paths:
-      {{- range .Values.rules }}
+      {{- range .Values.api.rules }}
       - path: "{{ .path }}(/|$)(.*)"
         pathType: ImplementationSpecific
         backend:

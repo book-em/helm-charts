@@ -5,7 +5,7 @@ metadata:
   namespace: {{ .Values.namespace }}
 spec:
   rules:
-  - host: {{ .Values.host }}
+  - host: {{ .Values.web.host }}
     http:
       paths:
       - path: /
