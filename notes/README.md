@@ -1176,3 +1176,23 @@ in the microservices' cors configuration. But if the real origin is different, i
 
 So I had to add `bookem.local` to all the microservices' allowed CORS origins.
 
+**12. Fixing room images not working**
+
+One more thing, I messed up the path to the image server:
+
+```yml
+# ingress values
+
+- path: /room-image
+  service: room-image-server
+```
+
+but the web app submits requests to:
+
+```yml
+# web app configmap
+
+ROOM_SERVICE_IMAGES_URL: http://api.bookem.local/images
+```
+
+So I changed it to `/images` in `ingress-gateway/values.yaml`
