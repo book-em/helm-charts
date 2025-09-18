@@ -57,7 +57,8 @@ inside a configmap's template you'll see `FOO: {{ .Values.bar | quote }}` instea
 both a Persistent Volume and a Persistent Volume Claim, but we can probably get
 away with just the claim under the right configurations.
 
-- `Ingress` ...
+- `Ingress` maps traffic to services, similar to nginx, to be used outside the
+k8s cluster. To do this, we need an Ingress Controller like Nginx or HAProxy. We'll use nginx.
 
 - `Secret` is a secret. We can use this to pass secret files like JWT keys to Deployments (Pods).
 
@@ -1196,3 +1197,62 @@ ROOM_SERVICE_IMAGES_URL: http://api.bookem.local/images
 ```
 
 So I changed it to `/images` in `ingress-gateway/values.yaml`
+
+**12 Helmfile**
+
+Let's speed things up. With helmfile, I can run a single command
+and it will automatically upgrade only those charts that are needed.
+
+Installing helmfile:
+
+```
+helm plugin install https://github.com/databus23/helm-diff
+
+curl -LO https://github.com/helmfile/helmfile/releases/download/v1.1.7/helmfile_1.1.7_linux_amd64.tar.gz
+tar -xzf helmfile_1.1.7_linux_amd64.tar.gz
+sudo mv helmfile /usr/local/bin/
+
+helmfile --version
+```
+
+If everything works, we can create a helmfile:
+
+
+```yml
+# helmfile.yaml
+
+releases:
+  - name: user-service
+    chart: ./user-service
+  - name: user-db
+    chart: ./user-db
+  
+  - name: room-service
+    chart: ./room-service
+  - name: room-db
+    chart: ./room-db
+  - name: room-image-server
+    chart: ./room-image-server
+
+  - name: reservation-service
+    chart: ./reservation-service
+  - name: reservation-db
+    chart: ./reservation-db    
+
+  - name: web-app
+    chart: ./web-app
+
+  - name: ingress-gateway
+    chart: ./ingress-gateway
+```
+
+And to use it:
+
+```sh
+helmfile apply
+
+# This will remove all pods, services, deployments, replicasets, ingresses, ...!
+helmfile destroy
+```
+
+I'm not sure if this eliminates the need to do `kubectl kubectl rollout restart deployment ...`.
