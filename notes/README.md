@@ -825,3 +825,238 @@ kubectl port-forward svc/room-service 8503:8080
 kubectl port-forward svc/room-image-server 8505:80
 kubectl port-forward svc/reservation-service 8506:8080
 ```
+
+**10. Deploying the web app**
+
+The process, once again, is the same as for the previous charts.
+
+
+**10.1** Microservice hosts
+
+Things get a bit complicated because of communication: what are the URLs of each
+microservice that the web app communicates with?
+
+We used to hardcode this, but that's not an option anymore. The URLs are different when
+we're using docker compose from when we're using k8s. So the URLs need to be env variables.
+
+There's a problem with env vars and Node projects: they are static-time only. You pass the
+env variables when doing `npm build`. This is bad, because we build the web app when creating
+a docker image. By the time our k8s engine pulls that image and creates a pod, it's too late.
+
+That's why we need runtime environment variables, which we can achieve using a hack:
+
+- [inside the web app repo]
+- create a `env.js` inside `/public`:
+
+```js
+window.__ENV__ = {
+    VITE_USER_SERVICE_URL: "http://localhost:8500",
+    VITE_ROOM_SERVICE_URL: "http://localhost:8503",
+    VITE_ROOM_SERVICE_IMAGES_URL: "http://localhost:8505",
+    VITE_RESERVATION_SERVICE_URL: "http://localhost:8506"
+};
+```
+
+- load the script inside `index.html`: `<script src="/env.js"></script>`
+- instead of:
+
+```ts
+export const axiosInstance = axios.create({
+    baseURL: "http://localhost:8500/api",
+});
+```
+
+we do:
+
+```ts
+export const axiosInstance = axios.create({
+    baseURL: (window.__ENV__?.VITE_USER_SERVICE_URL || "http://localhost:8500") + "/api",
+});
+```
+
+So now, we can change the env variables by modifying `env.js` during runtime!
+
+```yml
+# web-app/configmap.yml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  ...
+data:
+  env.js: |
+    window.__ENV__ = {
+      VITE_USER_SERVICE_URL: "{{ .Values.configmap.data.USER_SERVICE_URL }}",
+      VITE_ROOM_SERVICE_URL: "{{ .Values.configmap.data.ROOM_SERVICE_URL }}",
+      VITE_ROOM_SERVICE_IMAGES_URL: "{{ .Values.configmap.data.ROOM_SERVICE_IMAGES_URL }}",
+      VITE_RESERVATION_SERVICE_URL: "{{ .Values.configmap.data.RESERVATION_SERVICE_URL }}"
+    };
+
+---
+# web-app/deployment.yml
+
+spec:
+  template:
+    spec:
+      containers:
+      - volumeMounts:
+        - name: config-volume
+          mountPath: {{ .Values.configmap.js_env_path }}
+          subPath: {{ .Values.configmap.js_env_file }}
+
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ .Values.appName }}
+
+---
+# web-app/values.yaml
+
+configmap:
+  js_env_path: /usr/share/nginx/html/env.js
+  js_env_file: env.js
+  data:
+    USER_SERVICE_URL: http://user-service:8080
+    ROOM_SERVICE_URL: http://room-service:8080
+    ROOM_SERVICE_IMAGES_URL: http://room-image-server:8080
+    RESERVATION_SERVICE_URL: http://reservation-service:8080
+```
+
+So now we open the port for only the web-app and... it won't work.
+Because then our host tries to send an http request at `http://user-service:8080`,
+which cannot be resolved (only the k8s engine can resolve this).
+
+**10.2** Ingress
+
+To solve this, we'll use Ingress.
+
+We need to enable it inside minikube:
+```sh
+minikube addons enable ingress
+```
+
+We'll create a new chart called ingress-gateway.
+
+```yml
+---
+# ingress-gateway/values.yaml
+
+appName: ingress-gateway
+namespace: default
+
+host: bookem.local
+
+# We use ingress as a reverse proxy, so we map paths basically.
+
+rules:
+- path: /user
+  service: user-service
+  port: 8080
+- path: /room
+  service: room-service
+  port: 8080
+- path: /room-image
+  service: room-image-server
+  port: 80
+- path: /reservation
+  service: reservation-service
+  port: 8080
+
+---
+# ingress-gateway/ingress-web.yml
+
+# This one serves the web app.
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.appName }}-web
+  namespace: {{ .Values.namespace }}
+spec:
+  rules:
+  - host: {{ .Values.host }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web-app
+            port:
+              number: 80
+
+---
+# ingress-gateway/ingress-api.yml
+
+# This one routes the microservices.
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  # Note the different name from the web ingress:
+  name: {{ .Values.appName }}-api
+  namespace: {{ .Values.namespace }}
+  # This is important since the web api ingress is "dynamic"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+  - host: {{ .Values.host }}
+    http:
+      paths:
+      # This is a loop, over the `rules` inside values.yaml
+      {{- range .Values.rules }}
+      # Inside a loop, values are relative, hence .path (=> rules.path)
+      - path: "{{ .path }}(/|$)(.*)"
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ .service }}
+            port:
+              number: {{ .port }}
+      {{- end }}
+```
+
+And now in web app chart:
+
+```yml
+# web-app/values.yaml
+
+configmap:
+  js_env_path: /usr/share/nginx/html/env.js
+  js_env_file: env.js
+  data:
+    USER_SERVICE_URL: http://bookem.local/user
+    ROOM_SERVICE_URL: http://bookem.local/room
+    ROOM_SERVICE_IMAGES_URL: http://bookem.local/images
+    RESERVATION_SERVICE_URL: http://bookem.local/reservation
+```
+
+And one last thing, we need to translate echo "$(minikube ip) myapp.local" | sudo tee -a /etc/hosts
+
+(I can't remember if you need to do this, it took me so long to get this
+to work that I've tried 20+ things, but in case all the stuff later won't work, specify the ingress-nginx type and external IP):
+
+```sh
+kubectl patch svc ingress-nginx-controller -n ingress-nginx \
+  -p '{"spec": {"type": "LoadBalancer"}}'
+
+kubectl patch svc ingress-nginx-controller -n ingress-nginx \
+  -p '{"spec": {"externalIPs": ["192.168.49.2"]}}'
+```
+
+If you're running on WSL like me, you need to "bridge" the connection.
+For this, I used `socat`:
+
+```sh
+sudo apt install socat
+sudo socat TCP-LISTEN:80,fork TCP:$(minikube ip):80
+```
+
+So to summarise:
+
+- the web app dynamically reads the URLs for microservices through a `.js` that DOESN'T GET MINIFIED
+- the `.js` file can be updated by k8s/docker compose during setup, so we get runtime environment variables for a web app
+- with k8s, we tell the web app to talk to ingress
+- ingress maps everything accordingly
+- if you're using WSL (k8s is in a different network basically), you need to connect using something like socat

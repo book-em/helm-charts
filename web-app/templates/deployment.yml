@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.appName }}
+spec:
+  replicas: {{ .Values.replicas }}
+
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+      annotations:
+        configmap-hash: {{ .Values.configmap | toJson | sha256sum }}
+
+    spec:
+      containers:
+        - name: {{ .Values.appName }}
+          image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.port }}
+          volumeMounts:
+          - name: env-config
+            mountPath: {{ .Values.configmap.js_env_path }}
+            subPath: {{ .Values.configmap.js_env_file }}
+
+      volumes:
+      - name: env-config
+        configMap:
+          name: {{ .Values.appName }}

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.appName }}
+  namespace: {{ .Values.namespace }}
+data:
+  env.js: |
+    window.__ENV__ = {
+      VITE_USER_SERVICE_URL: "{{ .Values.configmap.data.USER_SERVICE_URL }}",
+      VITE_ROOM_SERVICE_URL: "{{ .Values.configmap.data.ROOM_SERVICE_URL }}",
+      VITE_ROOM_SERVICE_IMAGES_URL: "{{ .Values.configmap.data.ROOM_SERVICE_IMAGES_URL }}",
+      VITE_RESERVATION_SERVICE_URL: "{{ .Values.configmap.data.RESERVATION_SERVICE_URL }}"
+    };
