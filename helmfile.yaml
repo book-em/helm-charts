@@ -1,0 +1,23 @@
+releases:
+  - name: user-service
+    chart: ./user-service
+  - name: user-db
+    chart: ./user-db
+  
+  - name: room-service
+    chart: ./room-service
+  - name: room-db
+    chart: ./room-db
+  - name: room-image-server
+    chart: ./room-image-server
+
+  - name: reservation-service
+    chart: ./reservation-service
+  - name: reservation-db
+    chart: ./reservation-db    
+
+  - name: web-app
+    chart: ./web-app
+
+  - name: ingress-gateway
+    chart: ./ingress-gateway
