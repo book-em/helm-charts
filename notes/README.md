@@ -1077,3 +1077,102 @@ So to summarise:
 - with k8s, we tell the web app to talk to ingress
 - ingress maps everything accordingly
 - if you're using WSL (k8s is in a different network basically), you need to connect using something like socat
+
+**11. Splitting Ingress hosts**
+
+Ingress excepts anything with port 80 and url `/` and beyond to be the web app.
+This can cause problems if any of our API servers uses port 80 and a raw `/` url (for example, room images server).
+
+It would be a good idea to split it. So that:
+
+```
+bookem.local      -> web
+api.bookem.local  -> API server
+```
+
+Here's how:
+
+```yml
+---
+# ingress-gateway/values.yml
+appName: ingress-gateway
+namespace: default
+
+web:
+  host: bookem.local
+
+api:
+  host: api.bookem.local
+
+  rules:
+  - path: /user
+    service: user-service
+    port: 8080
+  - path: /room
+    service: room-service
+    port: 8080
+  - path: /room-image
+    service: room-image-server
+    port: 80
+  - path: /reservation
+    service: reservation-service
+    port: 8080
+
+---
+# ingress-gateway/templates/ingress.api.yml
+
+spec:
+  rules:
+  - host: {{ .Values.api.host }}
+
+---
+# ingress-gateway/templates/ingress.web.yml
+
+spec:
+  rules:
+  - host: {{ .Values.web.host }}
+```
+
+So we just update the host.
+
+But the web app must hit the proper URLs then:
+
+```yml
+# web-app/values.yml
+
+configmap:
+  data:
+    USER_SERVICE_URL: http://api.bookem.local/user
+    ROOM_SERVICE_URL: http://api.bookem.local/room
+    ROOM_SERVICE_IMAGES_URL: http://api.bookem.local/images
+    RESERVATION_SERVICE_URL: http://api.bookem.local/reservation
+```
+
+Finally, add `api.bookem.local` to your hosts file:
+
+```yml
+# C:/Windows/System32/drivers/etc/hosts
+
+127.0.0.1 bookem.local
+127.0.0.1 api.bookem.local
+```
+
+Likewise on linux.
+
+Originally this didn't work for me because of CORS errors:
+
+```
+WEB APP             API SERVER
+
+bookem.local        api.bookem.local
+```
+
+- WEB APP sends request to API SERVER
+- API SERVER rejects because bookem.local is not an allowed origin.
+
+What's funny is how we _didn't_ need to put these hosts in the CORS back when everything
+was `bookem.local`, I guess the host resolved it properly to `127.0.0.1` which _does_ exist
+in the microservices' cors configuration. But if the real origin is different, it won't allow.
+
+So I had to add `bookem.local` to all the microservices' allowed CORS origins.
+

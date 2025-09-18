@@ -3,7 +3,7 @@ namespace: default
 replicas: 1
 image:
   name: magley/bookem-room-service
-  tag: "0.3.0"
+  tag: "nightly-0.1.0"
 port: "8080"
 
 configmap:
