@@ -1053,6 +1053,23 @@ sudo apt install socat
 sudo socat TCP-LISTEN:80,fork TCP:$(minikube ip):80
 ```
 
+You will also have to resolve the hostname yourself.
+If your _host_ is running windows:
+
+```yml
+# C:/Windows/System32/drivers/etc/hosts
+
+127.0.0.1 bookem.local
+```
+
+and if it's linux:
+
+```yml
+# /etc/hosts
+
+127.0.0.1 bookem.local
+```
+
 So to summarise:
 
 - the web app dynamically reads the URLs for microservices through a `.js` that DOESN'T GET MINIFIED
