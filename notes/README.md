@@ -1198,7 +1198,7 @@ ROOM_SERVICE_IMAGES_URL: http://api.bookem.local/images
 
 So I changed it to `/images` in `ingress-gateway/values.yaml`
 
-**12 Helmfile**
+**13. Helmfile**
 
 Let's speed things up. With helmfile, I can run a single command
 and it will automatically upgrade only those charts that are needed.
@@ -1256,3 +1256,7 @@ helmfile destroy
 ```
 
 I'm not sure if this eliminates the need to do `kubectl kubectl rollout restart deployment ...`.
+
+**14. Adminer**
+
+Just add another deployment-service for adminer.
