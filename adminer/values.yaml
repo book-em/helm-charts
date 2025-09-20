@@ -1,0 +1,10 @@
+appName: adminer
+namespace: default
+replicas: 1
+image:
+  name: adminer
+  tag: "4.8.0-standalone"
+port: "8080"
+
+ingress:
+  host: db.bookem.local

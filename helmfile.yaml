@@ -21,3 +21,6 @@ releases:
 
   - name: ingress-gateway
     chart: ./ingress-gateway
+
+  - name: adminer
+    chart: ./adminer
