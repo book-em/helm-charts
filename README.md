@@ -52,7 +52,7 @@ sudo apt install socat
 3. If you're using WSL2, establish a connection between your Windows host and the WSL guest:
 
     ```sh
-    sudo socat TCP-LISTEN:80,fork TCP:$(minikube ip):80
+    ./socat.sh
     ```
 
 4. Add the hostname to your hosts file:
@@ -63,11 +63,12 @@ sudo apt install socat
 
     127.0.0.1 bookem.local
     127.0.0.1 api.bookem.local
+    127.0.0.1 db.bookem.local
     ```
 
     - If you're on Linux:
     ```yml
     # /etc/hosts
 
-    127.0.0.1 bookem.local api.bookem.local
+    127.0.0.1 bookem.local api.bookem.local db.bookem.local
     ```

@@ -1260,3 +1260,17 @@ I'm not sure if this eliminates the need to do `kubectl kubectl rollout restart 
 **14. Adminer**
 
 Just add another deployment-service for adminer.
+
+Exposing adminer:
+
+- doing port forwarding every time is annoying
+- adminer doesn't belong in `bookem.local` (it's for the end user only)
+- adminer doesn't belong in `api.bookem.local` (it's for microservices)
+
+So, we'll create another Ingress host called `db.bookem.local`.
+
+Make sure to add `db.bookem.local` to your hosts file.
+
+Now you can access adminer by going to `db.bookem.local`.
+
+**15. **
