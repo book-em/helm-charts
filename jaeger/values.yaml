@@ -1,0 +1,27 @@
+appName: jaeger
+namespace: default
+replicas: 1
+image:
+  name: jaegertracing/all-in-one
+  tag: "1.53"
+
+port:
+  outside: 80 # Used outside the cluster
+  ui: 16686
+  colelctor: 14268
+  otlp: 4318 # 4318 is for HTTP while 4317 is for gRPC
+
+ingress:
+  host: jaeger.bookem.local
+
+configmap:
+  data:
+    SPAN_STORAGE_TYPE: badger
+    BADGER_EPHEMERAL: "false"
+    BADGER_DIRECTORY_VALUE: /badger/data
+    BADGER_DIRECTORY_KEY: /badger/key
+
+volumes:
+  dbStorage:
+    path: /badger
+    space: 1Gi
