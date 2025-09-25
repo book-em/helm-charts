@@ -1273,4 +1273,64 @@ Make sure to add `db.bookem.local` to your hosts file.
 
 Now you can access adminer by going to `db.bookem.local`.
 
-**15. **
+**15. Tracing**
+
+Tracing is done with Jaeger. Our microservices send data to it.
+
+For the most part, this is pretty standard. We _should_ be using the
+official helm chart but I couldn't, for the life of me, to get it to work.
+It would stall my minikube. So instead we do it manually.
+
+I'll cover the things that make this chart different from other charts.
+
+We need several ports:
+
+- the "outside" port which is what we use to access the web UI through Ingress - `80`
+- the internal UI port - `16686`
+- the collector port - `14268`
+- the OLTP port - `4318`. Be careful as `4318` is for HTTP while `4317` is for gRPC
+
+By default Jaeger uses gRPC, but back in `infrastructure` we used `4318` so we'll
+stick to that for consistency sake. Therefore, inside the Service, we must expose
+two ports:
+
+- `ui` 80:16686
+- `oltp` 4318:4318
+
+Any service that wants to send tracing data to jaeger needs an env variable:
+
+```yml
+# user-service/values.yml
+configmap:
+  data:
+    # This is used inside our app, nothing to do with Jaeger, but we use it
+    # to extract identification data. I wish I could put a version here as
+    # well but keeping that in sync with the real version at all times would
+    # be a pain.
+    SERVICE_NAME: user-service
+    DEPLOYMENT_ENV: prod
+
+    # This
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+```
+
+Back to Jaeger, it also needs some env variables:
+
+```yml
+configmap:
+  data:
+    SPAN_STORAGE_TYPE: badger
+    BADGER_EPHEMERAL: "false"
+    BADGER_DIRECTORY_VALUE: /badger/data
+    BADGER_DIRECTORY_KEY: /badger/key
+```
+
+Basicallu, we need to tell Jaeger what to do with persistency for storage.
+`memory` is the "default" one which doesn't save. `elasticsearch` and `cassandra`
+are too bloated for our purposes, so `badger` it is.
+
+We also need to add anothe values to `hosts`:
+
+```
+127.0.0.1 jaeger.bookem.local
+```
