@@ -41,6 +41,9 @@ sudo apt install socat
 
     ```sh
     minikube start
+
+    # If you haven't, enable ingress.
+    minikube addons enable ingress
     ```
 
 2. The easiest way to deploy the whole infrastructure is using helmfile:
@@ -64,11 +67,12 @@ sudo apt install socat
     127.0.0.1 bookem.local
     127.0.0.1 api.bookem.local
     127.0.0.1 db.bookem.local
+    127.0.0.1 jaeger.bookem.local
     ```
 
     - If you're on Linux:
     ```yml
     # /etc/hosts
 
-    127.0.0.1 bookem.local api.bookem.local db.bookem.local
+    127.0.0.1 bookem.local api.bookem.local db.bookem.local jaeger.bookem.local
     ```
