@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.appName }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.appName }}
+spec:
+  selector:
+    app: {{ .Values.appName }}
+
+  ports:
+    - protocol: TCP
+      name: ui
+      targetPort: {{ .Values.port.ui }}
+      port: {{ .Values.port.outside }}
+    - protocol: TCP
+      name: otlp-http
+      port: {{ .Values.port.otlp }}
+      targetPort: {{ .Values.port.otlp }}

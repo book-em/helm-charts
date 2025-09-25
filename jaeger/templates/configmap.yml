@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.appName }}
+  namespace: {{ .Values.namespace }}
+data:
+  SPAN_STORAGE_TYPE: {{ .Values.configmap.data.SPAN_STORAGE_TYPE | quote }}
+  BADGER_EPHEMERAL: {{ .Values.configmap.data.BADGER_EPHEMERAL | quote }}
+  BADGER_DIRECTORY_VALUE: {{ .Values.configmap.data.BADGER_DIRECTORY_VALUE | quote }}
+  BADGER_DIRECTORY_KEY: {{ .Values.configmap.data.BADGER_DIRECTORY_KEY | quote }}
