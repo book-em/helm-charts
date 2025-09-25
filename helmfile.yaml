@@ -24,3 +24,6 @@ releases:
 
   - name: adminer
     chart: ./adminer
+
+  - name: jaeger
+    chart: ./jaeger
