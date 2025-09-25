@@ -3,7 +3,7 @@ namespace: default
 replicas: 1
 image:
   name: magley/bookem-user-service
-  tag: "nightly-0.1.0"
+  tag: "a2025_09_25_01"
 port: "8080"
 
 configmap:
@@ -15,3 +15,6 @@ configmap:
     DB_PASSWORD: password123
     JWT_PRIVATE_KEY_PATH: /app/keys/private_key.key
     JWT_PUBLIC_KEY_PATH: /app/keys/public_key.pem
+    SERVICE_NAME: user-service
+    DEPLOYMENT_ENV: prod
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
