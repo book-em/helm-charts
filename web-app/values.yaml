@@ -3,7 +3,7 @@ namespace: default
 replicas: 1
 image:
   name: magley/bookem-web-app
-  tag: "nightly-0.3.13"
+  tag: "0.1.0"
 port: "80"
 publicPort: 30000
 
