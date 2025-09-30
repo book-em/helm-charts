@@ -14,3 +14,6 @@ configmap:
     DB_USER: bookem_reservationdb_user
     DB_PASSWORD: password123
     JWT_PUBLIC_KEY_PATH: /app/keys/public_key.pem
+    SERVICE_NAME: reservation-service
+    DEPLOYMENT_ENV: prod
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
