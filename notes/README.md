@@ -1325,11 +1325,11 @@ configmap:
     BADGER_DIRECTORY_KEY: /badger/key
 ```
 
-Basicallu, we need to tell Jaeger what to do with persistency for storage.
+Basically, we need to tell Jaeger what to do with persistency for storage.
 `memory` is the "default" one which doesn't save. `elasticsearch` and `cassandra`
 are too bloated for our purposes, so `badger` it is.
 
-We also need to add anothe values to `hosts`:
+We also need to add another value to `hosts`:
 
 ```
 127.0.0.1 jaeger.bookem.local
