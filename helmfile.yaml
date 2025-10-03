@@ -29,3 +29,5 @@ releases:
     chart: ./jaeger
   - name: grafana
     chart: ./grafana
+  - name: grafana-loki
+    chart: ./grafana-loki
