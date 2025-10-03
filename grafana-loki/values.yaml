@@ -1,0 +1,7 @@
+appName: grafana-loki
+namespace: default
+replicas: 1
+image:
+  name: grafana/loki
+  tag: "latest"
+port: "3100"
