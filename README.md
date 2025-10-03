@@ -68,11 +68,12 @@ sudo apt install socat
     127.0.0.1 api.bookem.local
     127.0.0.1 db.bookem.local
     127.0.0.1 jaeger.bookem.local
+    127.0.0.1 grafana.bookem.local
     ```
 
     - If you're on Linux:
     ```yml
     # /etc/hosts
 
-    127.0.0.1 bookem.local api.bookem.local db.bookem.local jaeger.bookem.local
+    127.0.0.1 bookem.local api.bookem.local db.bookem.local jaeger.bookem.local grafana.bookem.local
     ```
