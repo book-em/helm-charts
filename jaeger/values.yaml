@@ -6,7 +6,7 @@ image:
   tag: "1.53"
 
 port:
-  outside: 80 # Used outside the cluster
+  outside: 80 # Used outside the cluster and by other pods like Grafana
   ui: 16686
   colelctor: 14268
   otlp: 4318 # 4318 is for HTTP while 4317 is for gRPC
