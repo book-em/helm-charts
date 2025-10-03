@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.provisioning.datasources.configMapName }}
+  namespace: {{ .Values.namespace }}
+data:
+  jaeger.yml: |
+{{ .Files.Get "provisioning/datasources/jaeger.yml" | indent 4 }}
