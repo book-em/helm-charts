@@ -1,0 +1,29 @@
+appName: grafana
+namespace: default
+replicas: 1
+image:
+  name: grafana/grafana
+  tag: "latest"
+port: "3000"
+
+ingress:
+  host: grafana.bookem.local
+
+persistence:
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  storageClassName: standard
+  mountPath: /var/lib/grafana
+
+provisioning:
+  datasources:
+    mountPath: /etc/grafana/provisioning/datasources
+    configMapName: grafana-datasources
+
+  dashboards:
+    mountPath: /etc/grafana/provisioning/dashboards
+    configMapName: grafana-dashboards
+
+  dashboardFiles:
+    mountPath: /var/lib/grafana/dashboards
+    configMapName: grafana-dashboard-files
