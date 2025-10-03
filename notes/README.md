@@ -1334,3 +1334,143 @@ We also need to add another value to `hosts`:
 ```
 127.0.0.1 jaeger.bookem.local
 ```
+
+**16. Grafana**
+
+The interesting stuff is this (from `infrastructure.git/compose.yml`):
+
+```yml
+grafana:
+  ...
+  volumes:
+    - grafana-storage:/var/lib/grafana
+    - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+    - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+    - ./grafana/dashboards:/var/lib/grafana/dashboards
+```
+
+We need to create a bind volume (grafana-storage) and we need to properly provision grafana configuration.
+
+1) Bind volume:
+
+```yml
+---
+# values.yml
+
+persistence:
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  storageClassName: standard
+  mountPath: /var/lib/grafana
+---
+# pvc.yml
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.appName }}
+  namespace: {{ .Values.namespace }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.size }}
+  storageClassName: {{ .Values.persistence.storageClassName }}
+---
+# deployment.yml
+...:
+  volumeMounts:
+    - name: storage
+      mountPath: {{ .Values.persistence.mountPath }}
+
+volumes:
+  - name: storage
+    persistentVolumeClaim:
+      claimName: {{ .Values.appName }}
+```
+
+2) Provisioning:
+
+```yml
+---
+# values.yml
+
+provisioning:
+  datasources:
+    mountPath: /etc/grafana/provisioning/datasources
+    configMapName: grafana-datasources
+
+  dashboards:
+    mountPath: /etc/grafana/provisioning/dashboards
+    configMapName: grafana-dashboards
+
+  dashboardFiles:
+    mountPath: /var/lib/grafana/dashboards
+    configMapName: grafana-dashboard-files
+---
+# deployment.yml
+...:
+  volumeMounts:
+    - name: {{ .Values.provisioning.datasources.configMapName }}
+      mountPath: {{ .Values.provisioning.datasources.mountPath }}
+    - name: {{ .Values.provisioning.dashboards.configMapName }}
+      mountPath: {{ .Values.provisioning.dashboards.mountPath }}
+    - name: {{ .Values.provisioning.dashboardFiles.configMapName }}
+      mountPath: {{ .Values.provisioning.dashboardFiles.mountPath }}
+volumes:
+  - name: {{ .Values.provisioning.datasources.configMapName }}
+    configMap:
+      name: {{ .Values.provisioning.datasources.configMapName }}
+  - name: {{ .Values.provisioning.dashboards.configMapName }}
+    configMap:
+      name: {{ .Values.provisioning.dashboards.configMapName }}
+  - name: {{ .Values.provisioning.dashboardFiles.configMapName }}
+    configMap:
+      name: {{ .Values.provisioning.dashboardFiles.configMapName }}
+```
+
+So for each mount in compose, we'll create a separate configmap. The configmap
+will contain the actual file content itself by using the `.Files` function like
+we did for secrets (see earlier in this doc).
+
+```yml
+# configmap-datasources.yml`
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.provisioning.datasources.configMapName }}
+  namespace: {{ .Values.namespace }}
+data:
+  jaeger.yml: |
+{{ .Files.Get "provisioning/datasources/jaeger.yml" | indent 4 }}
+
+# It's important that you pass the pipe operator, put the .Files.Get in a new line
+# with NO indentation (because .Files.Get will add the whitespace from the file) and
+# then pipe _that_ to indent 4 (we choose 4 because inside `configmap-datasources.yml`
+# `data:` is at 0, `jaeger.yml` is at 2, so the next one will be 4).
+```
+
+Obviously, the provisioning files for Grafana need to be at the right location.
+
+```
+helm-charts/
+  grafana/
+    vvvvvvvvvvvvvvvvvvvv
+    dashboards/
+    provisioning/
+      dashboard/
+        dashboard.yml
+      datasources/
+        jaeger.yml
+    ^^^^^^^^^^^^^^^^^^^^
+    templates/
+      ...
+```
+
+We also need to add another value to `hosts`:
+
+```
+127.0.0.1 grafana.bookem.local
+```
