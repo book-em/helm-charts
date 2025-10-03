@@ -1474,3 +1474,23 @@ We also need to add another value to `hosts`:
 ```
 127.0.0.1 grafana.bookem.local
 ```
+
+**17. Loki and Alloy**
+
+Even though this isn't relevant for minikube, here's the flow:
+
+```
+microservice -> [log file] <- alloy -> loki -> grafana
+```
+
+Loki is an aggregator, while Alloy is a collector.
+
+I wasn't sure if I should use Promtail like we were shown in the course
+materials because Promtail is no longer worked on and will reach end of life at
+the start of 2026. Alloy is its successor. So I picked Alloy.
+
+1) Loki
+
+Setting up Loki is easy because it's just a docker image with an exposed port 3100, so nothing special.
+
+2) Alloy
