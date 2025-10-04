@@ -1,0 +1,10 @@
+appName: grafana-alloy
+namespace: default
+replicas: 1
+image:
+  name: grafana/alloy
+  tag: "latest"
+
+config:
+  filePathSource: "provision/config.alloy"
+  pathDest: "/etc/alloy"

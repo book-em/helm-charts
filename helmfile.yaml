@@ -31,3 +31,5 @@ releases:
     chart: ./grafana
   - name: grafana-loki
     chart: ./grafana-loki
+  - name: grafana-alloy
+    chart: ./grafana-alloy
