@@ -1494,3 +1494,138 @@ the start of 2026. Alloy is its successor. So I picked Alloy.
 Setting up Loki is easy because it's just a docker image with an exposed port 3100, so nothing special.
 
 2) Alloy
+
+This is where things get complicated.
+Alloy needs to access logs from individual pods.
+But alloy itself is living in its own pod.
+
+So first, let's specify the configuration file. This is done just like
+in grafana (where we use Helm's `.Files` to do substitution). The juicy
+part is the configuration file itself, which is a bit more complex than the one in `infrastructure.git`:
+
+```alloy
+// Tell alloy to look for Kubernetes pods
+discovery.kubernetes "pod" {
+  role = "pod"
+}
+
+// Rewrite some labels.
+// I think we can get away with not using any of these,
+// except maybe the __path__ one, but I haven't checked.
+//
+// I won't write them all here nor explain them, but they
+// just replace labels with other labels, plus we can do
+// fancy things like merging them with a separator or placing
+// the new label as part of a fixed string.
+discovery.relabel "pod_logs" {
+  targets = discovery.kubernetes.pod.targets
+
+  rule {...}
+  ...
+}
+
+// Specify that Loki should recieve logs from kubernetes.
+loki.source.kubernetes "pod_logs" {
+  forward_to = [loki.process.pod_logs.receiver]
+  targets    = discovery.relabel.pod_logs.output
+}
+
+// We add static labels to each log here (cluster: minikube).
+loki.process "pod_logs" {
+  stage.static_labels {
+      values = {
+        cluster = "minikube",
+      }
+  }
+
+  forward_to = [loki.write.default.receiver]
+}
+
+// Finally, we write to Loki.
+loki.write "default" {
+  endpoint {
+    url = "http://grafana-loki:3100/loki/api/v1/push"
+  }
+}
+```
+
+And now the k8s resources needed for this to work.
+
+- we need a Deployment (as usual) 
+  - we explicitly specify the config file path
+  - we mount the config from the ConfigMap (see below)
+  - we mount /var/log/pods which is where minikube puts all the pods' logs
+- we need a ConfigMap
+  - like I said, we "paste" the config file here and then it gets mounted
+- we need RBAC
+  - Role Based Access Control
+  - this is because by default the pod cannot access /var/log/pods
+
+So first we create a ClusterRole:
+
+```yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Values.appName }}
+  namespace: {{ .Values.namespace }}
+rules:
+  - apiGroups: [""]
+    # We need both 'pods' and 'pods/log'.
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list", "watch"]
+```
+
+And then we bind this role to the Alloy chart:
+
+```yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Values.appName }}
+  namespace: {{ .Values.namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ .Values.appName }}
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.appName }}
+    namespace: {{ .Values.namespace }}
+```
+
+So we bind a `ClusterRole` to a `ServiceAccount`.
+
+- we need a ServiceAccount:
+  - it's just a non-user account 
+
+```yml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.appName }}
+  namespace: {{ .Values.namespace }}
+```
+
+So we've created a RBAC role, and bound it to a service account.
+
+Now we just need to bind the serivce account to our alloy Pod:
+
+```yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  ...
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ .Values.appName }}
+```
+
+And that's it. Alloy will collect logs created by Minikube for every pod.
+I should somehow filter by namespace, but it's not worth the hassle.
+
+Unlike in `infrastructure`, where we read the contents of the log file
+specifically created by the services, in here we read log files created by
+Kubernetes themselves, so the two are not equivalent, but the Kubernetes
+approach is better because it collects more logs and is more exhaustive.
