@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.appName }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+    spec:
+      serviceAccountName: {{ .Values.appName }}
+      containers:
+      - name: {{ .Values.appName }}
+        image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
+        args: ["run", "/etc/alloy/config.alloy"]
+        volumeMounts:
+          - name: config
+            mountPath: {{ .Values.config.pathDest }}
+          - name: varlogpods
+            mountPath: /var/log/pods
+            readOnly: true
+
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Values.appName }}
+        - name: varlogpods
+          hostPath:
+            path: /var/log/pods
