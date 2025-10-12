@@ -1673,3 +1673,17 @@ scrape_configs:
     - targets: ['prometheus-node-exporter:9100']
 ```
 
+(3) CAdvisor
+
+CAdvisor collects info for containers (in our case, containers inside pods).
+
+```yml
+# prometheus/provision/prometheus.yml
+
+scrape_configs:
+  ...
+- job_name: 'cadvisor'
+  static_configs:
+    - targets: ['cadvisor:8080']
+```
+
