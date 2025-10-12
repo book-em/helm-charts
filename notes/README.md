@@ -1628,4 +1628,27 @@ I should somehow filter by namespace, but it's not worth the hassle.
 Unlike in `infrastructure`, where we read the contents of the log file
 specifically created by the services, in here we read log files created by
 Kubernetes themselves, so the two are not equivalent, but the Kubernetes
-approach is better because it collects more logs and is more exhaustive.
+approach is better because it collects more logs and is more exhaustive.approach is better because it collects more logs and is more exhaustive.
+
+**18. Metrics**
+
+(1) Prometheus
+
+Nothing special.
+- We put the configuration in `/provision` and load it dynamically in a ConfigMap.
+
+```yml
+# prometheus/provision/prometheus.yml
+
+global:
+  scrape_interval: 10s
+
+scrape_configs:
+- job_name: prometheus
+  static_configs:
+    - targets: ['prometheus:9090'] 
+```
+
+- We need a PVC to keep the data.
+- We mount all the volumes and that's that.
+

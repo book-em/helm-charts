@@ -1,0 +1,10 @@
+{{- $file := .Values.config.filePathSource }}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.appName }}
+  namespace: {{ .Values.namespace }}
+data:
+  prometheus.yml: |
+{{ .Files.Get $file | indent 4 }}
