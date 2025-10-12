@@ -1,0 +1,19 @@
+appName: prometheus-node-exporter
+namespace: default
+replicas: 1
+image:
+  name: prom/node-exporter
+  tag: "latest"
+
+port: 9100
+
+volumes:
+  proc:
+    mountPath: /host/proc
+    path: /proc
+  sys:
+    mountPath: /host/sys
+    path: /sys
+  root:
+    mountPath: /host/root
+    path: /

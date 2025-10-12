@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.appName }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+    spec:
+      hostPID: true
+      containers:
+        - name: {{ .Values.appName }}
+          image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.port}}
+
+          volumeMounts:
+            - name: proc
+              mountPath: {{ .Values.volumes.proc.mountPath }}
+              readOnly: true
+            - name: sys
+              mountPath: {{ .Values.volumes.sys.mountPath }}
+              readOnly: true
+            - name: root
+              mountPath: {{ .Values.volumes.root.mountPath }}
+              readOnly: true
+
+      volumes:
+        - name: proc
+          hostPath:
+            path: {{ .Values.volumes.proc.path }}
+        - name: sys
+          hostPath:
+            path: {{ .Values.volumes.sys.path }}
+        - name: root
+          hostPath:
+            path: {{ .Values.volumes.root.path }}
