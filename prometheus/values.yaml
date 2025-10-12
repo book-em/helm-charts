@@ -1,0 +1,19 @@
+appName: prometheus
+namespace: default
+replicas: 1
+image:
+  name: prom/prometheus
+  tag: "latest"
+
+port: 9090
+
+config:
+  filePathSource: "provision/prometheus.yml"
+  pathDest: "/etc/prometheus/"
+  pathDestFull: "/etc/prometheus/prometheus.yml"
+
+volumes:
+  config:
+    mountPath: /etc/prometheus
+  data:
+    mountPath: /prometheus
