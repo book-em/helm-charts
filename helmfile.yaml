@@ -32,4 +32,8 @@ releases:
   - name: grafana-loki
     chart: ./grafana-loki
   - name: grafana-alloy
-    chart: ./grafana-alloy
+    chart: ./grafana-alloy    chart: ./grafana-alloy
+  - name: prometheus
+    chart: ./prometheus
+  - name: prometheus-node-exporter
+    chart: ./prometheus-node-exporter
