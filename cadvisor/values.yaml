@@ -1,0 +1,11 @@
+appName: cadvisor
+namespace: default
+image:
+  repository: gcr.io/cadvisor/cadvisor
+  tag: latest
+port: 8080
+volumes:
+  rootfs: /
+  varRun: /var/run
+  sys: /sys
+  docker: /var/lib/docker
