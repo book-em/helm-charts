@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.appName }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+    spec:
+      automountServiceAccountToken: false # We need this because otherwise one of the volume mounts below won't work.
+      containers:
+        - name: {{ .Values.appName }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.port }}
+          volumeMounts:
+          - name: rootfs
+            mountPath: /rootfs
+            readOnly: true
+          - name: var-run
+            mountPath: /var/run
+            readOnly: true
+          - name: sys
+            mountPath: /sys
+            readOnly: true
+          - name: docker
+            mountPath: /var/lib/docker
+            readOnly: true
+      volumes:
+      - name: rootfs
+        hostPath:
+          path: {{ .Values.volumes.rootfs }}
+      - name: var-run
+        hostPath:
+          path: {{ .Values.volumes.varRun }}
+      - name: sys
+        hostPath:
+          path: {{ .Values.volumes.sys }}
+      - name: docker
+        hostPath:
+          path: {{ .Values.volumes.docker }}
