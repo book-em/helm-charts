@@ -1628,7 +1628,7 @@ I should somehow filter by namespace, but it's not worth the hassle.
 Unlike in `infrastructure`, where we read the contents of the log file
 specifically created by the services, in here we read log files created by
 Kubernetes themselves, so the two are not equivalent, but the Kubernetes
-approach is better because it collects more logs and is more exhaustive.approach is better because it collects more logs and is more exhaustive.
+approach is better because it collects more logs and is more exhaustive.
 
 **18. Metrics**
 
@@ -1651,4 +1651,25 @@ scrape_configs:
 
 - We need a PVC to keep the data.
 - We mount all the volumes and that's that.
+
+(2) Node Exporter
+
+This is for collecting the host's data like CPU and RAM.
+It's a basic chart with a couple of mounted volumes.
+
+The new thing is:
+
+- setting `hostPID: true` in the Deployment (analogous to `pid: "host"` in compose)
+
+Now to configure Prometheus to actually collect data from Node Exporter:
+
+```yml
+# prometheus/provision/prometheus.yml
+
+scrape_configs:
+  ...
+- job_name: node-exporter
+  static_configs:
+    - targets: ['prometheus-node-exporter:9100']
+```
 
