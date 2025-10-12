@@ -1687,3 +1687,12 @@ scrape_configs:
     - targets: ['cadvisor:8080']
 ```
 
+In case we have problems with this, I may need to add `kube-state-metrics`.
+I've been stuck on cadvisor for a couple of days because it wouldn't expose container labels
+(this has to do with Kubernetes 1.24 removing the Docker Plugin for cadvisor).
+I've been trying several things until I finally managed to get my own cadvisor pod to work
+(I had issues with mounting one of the directories).
+
+(4) Microservice web traffic
+
+Just like in `infrastructure.git`, I add the microservices' targets.
