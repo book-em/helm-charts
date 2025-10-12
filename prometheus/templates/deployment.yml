@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+    spec:
+      containers:
+      - name: {{ .Values.appName }}
+        image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
+        args:
+          - '--config.file={{ .Values.config.pathDestFull }}'
+
+        ports:
+        - containerPort: {{ .Values.port }}
+
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 9090
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        volumeMounts:
+        - name: config-volume
+          mountPath: {{ .Values.volumes.config.mountPath }}
+        - name: data-volume
+          mountPath: {{ .Values.volumes.data.mountPath }}
+
+      volumes:
+      - name: config-volume
+        configMap:
+          name: {{ .Values.appName }}
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: {{ .Values.appName }}
