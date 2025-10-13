@@ -21,9 +21,9 @@ provisioning:
     configMapName: grafana-datasources
 
   dashboards:
-    mountPath: /etc/grafana/provisioning/dashboards
+    mountPath: /var/lib/grafana/dashboards/json
     configMapName: grafana-dashboards
 
   dashboardFiles:
-    mountPath: /var/lib/grafana/dashboards
+    mountPath: /etc/grafana/provisioning/dashboards
     configMapName: grafana-dashboard-files
