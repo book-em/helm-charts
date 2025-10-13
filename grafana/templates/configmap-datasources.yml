@@ -6,3 +6,7 @@ metadata:
 data:
   jaeger.yml: |
 {{ .Files.Get "provisioning/datasources/jaeger.yml" | indent 4 }}
+  loki.yml: |
+{{ .Files.Get "provisioning/datasources/loki.yml" | indent 4 }}
+  prometheus.yml: |
+{{ .Files.Get "provisioning/datasources/prometheus.yml" | indent 4 }}
