@@ -4,3 +4,13 @@ metadata:
   name: {{ .Values.provisioning.dashboards.configMapName }}
   namespace: {{ .Values.namespace }}
 data:
+  docker-1.json: |-
+{{ .Files.Get "dashboards/docker-1.json" | indent 4 }}
+  docker-2.json: |-
+{{ .Files.Get "dashboards/docker-2.json" | indent 4 }}
+  host-metrics-2.json: |-
+{{ .Files.Get "dashboards/host-metrics-2.json" | indent 4 }}
+  host-metrics.json: |-
+{{ .Files.Get "dashboards/host-metrics.json" | indent 4 }}
+  web-apps.json: |-
+{{ .Files.Get "dashboards/web-apps.json" | indent 4 }}
