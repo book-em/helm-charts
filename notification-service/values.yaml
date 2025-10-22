@@ -1,0 +1,16 @@
+appName: notification-service
+namespace: default
+replicas: 1
+image:
+  name: magley/bookem-notification-service
+  tag: "0.1.0"
+port: "8080"
+
+configmap:
+  data:
+    MONGO_URI: mongodb://notification-db:27017
+    MONGO_DB_NAME: notifications
+    JWT_PUBLIC_KEY_PATH: /app/keys/public_key.pem
+    SERVICE_NAME: notification-service
+    DEPLOYMENT_ENV: prod
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
