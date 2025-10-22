@@ -1,0 +1,16 @@
+appName: notification-db
+namespace: default
+replicas: 1
+image:
+  name: mongo
+  tag: 7
+port: "27017"
+
+configmap:
+  data:
+    MONGO_INITDB_DATABASE: notifications
+
+volumes:
+  dbStorage:
+    path: /data/db
+    space: 1Gi
