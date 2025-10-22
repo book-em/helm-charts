@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.appName }}
+  namespace: {{ .Values.namespace }}
+data:
+  MONGO_URI: {{ .Values.configmap.data.MONGO_URI | quote }}
+  MONGO_DB_NAME: {{ .Values.configmap.data.MONGO_DB_NAME | quote}}
+  JWT_PUBLIC_KEY_PATH: {{ .Values.configmap.data.JWT_PUBLIC_KEY_PATH | quote }}
+  SERVICE_NAME: {{ .Values.configmap.data.SERVICE_NAME | quote }}
+  DEPLOYMENT_ENV: {{ .Values.configmap.data.DEPLOYMENT_ENV | quote }}
+  OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.configmap.data.OTEL_EXPORTER_OTLP_ENDPOINT | quote }}
