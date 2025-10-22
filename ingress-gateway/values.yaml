@@ -20,3 +20,6 @@ api:
   - path: /reservation
     service: reservation-service
     port: 8080
+  - path: /notification
+    service: notification-service
+    port: 8080
