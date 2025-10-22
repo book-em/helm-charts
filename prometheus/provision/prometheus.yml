@@ -20,3 +20,6 @@ scrape_configs:
 - job_name: 'reservation-service'
   static_configs:
     - targets: ['reservation-service:8080']
+- job_name: 'notficiation-service'
+  static_configs:
+    - targets: ['notficiation-service:8080']

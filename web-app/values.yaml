@@ -15,3 +15,4 @@ configmap:
     ROOM_SERVICE_URL: http://api.bookem.local/room
     ROOM_SERVICE_IMAGES_URL: http://api.bookem.local/images
     RESERVATION_SERVICE_URL: http://api.bookem.local/reservation
+    NOTIFICATION_SERVICE_URL: http://api.bookem.local/notification

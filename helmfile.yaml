@@ -16,6 +16,11 @@ releases:
   - name: reservation-db
     chart: ./reservation-db    
 
+  - name: notification-service
+    chart: ./notification-service
+  - name: notification-db
+    chart: ./notification-db   
+
   - name: web-app
     chart: ./web-app
 
