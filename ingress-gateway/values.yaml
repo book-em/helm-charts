@@ -23,3 +23,6 @@ api:
   - path: /notification
     service: notification-service
     port: 8080
+  - path: /rating
+    service: rating-service
+    port: 8080
