@@ -21,6 +21,11 @@ releases:
   - name: notification-db
     chart: ./notification-db   
 
+  - name: rating-service
+    chart: ./rating-service
+  - name: rating-db
+    chart: ./rating-db   
+
   - name: web-app
     chart: ./web-app
 
