@@ -3,7 +3,7 @@ namespace: default
 replicas: 1
 image:
   name: magley/bookem-notification-service
-  tag: "20251026"
+  tag: "0.3.0"
 port: "8080"
 
 configmap:
