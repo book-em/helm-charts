@@ -23,3 +23,6 @@ scrape_configs:
 - job_name: 'notficiation-service'
   static_configs:
     - targets: ['notficiation-service:8080']
+- job_name: 'rating-service'
+  static_configs:
+    - targets: ['rating-service:8080']
