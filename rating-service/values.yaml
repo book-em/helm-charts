@@ -1,0 +1,19 @@
+appName: rating-service
+namespace: default
+replicas: 1
+image:
+  name: magley/bookem-rating-service
+  tag: "0.1.0"
+port: "8080"
+
+configmap:
+  data:
+    DB_HOST: rating-db
+    DB_PORT: 5432
+    DB_NAME: bookem_ratingdb_db
+    DB_USER: bookem_ratingdb_user
+    DB_PASSWORD: password123
+    JWT_PUBLIC_KEY_PATH: /app/keys/public_key.pem
+    SERVICE_NAME: rating-service
+    DEPLOYMENT_ENV: prod
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
