@@ -10,5 +10,6 @@ data:
       VITE_ROOM_SERVICE_URL: "{{ .Values.configmap.data.ROOM_SERVICE_URL }}",
       VITE_ROOM_SERVICE_IMAGES_URL: "{{ .Values.configmap.data.ROOM_SERVICE_IMAGES_URL }}",
       VITE_RESERVATION_SERVICE_URL: "{{ .Values.configmap.data.RESERVATION_SERVICE_URL }}",
-      VITE_NOTIFICATION_SERVICE_URL: "{{ .Values.configmap.data.NOTIFICATION_SERVICE_URL }}"
+      VITE_NOTIFICATION_SERVICE_URL: "{{ .Values.configmap.data.NOTIFICATION_SERVICE_URL }}",
+      VITE_RATING_SERVICE_URL: "{{ .Values.configmap.data.RATING_SERVICE_URL }}",
     };
