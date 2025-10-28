@@ -1,0 +1,18 @@
+appName: rating-db
+namespace: default
+replicas: 1
+image:
+  name: postgres
+  tag: 15.9-alpine3.20
+port: "5432"
+
+configmap:
+  data:
+    POSTGRES_DB: bookem_ratingdb_db
+    POSTGRES_USER: bookem_ratingdb_user
+    POSTGRES_PASSWORD: password123
+
+volumes:
+  dbStorage:
+    path: /var/lib/postgresql/data
+    space: 1Gi
