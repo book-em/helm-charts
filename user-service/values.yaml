@@ -3,7 +3,7 @@ namespace: default
 replicas: 1
 image:
   name: magley/bookem-user-service
-  tag: "0.10.0"
+  tag: "0.11.0"
 port: "8080"
 
 configmap:
